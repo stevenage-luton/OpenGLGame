@@ -1,0 +1,3 @@
+﻿  main.cpp
+C:\Users\huw4\source\repos\OpenGLLoader\OpenGLLoader\main.cpp(204,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  OpenGLLoader.vcxproj -> C:\Users\huw4\source\repos\OpenGLLoader\x64\Debug\OpenGLLoader.exe
