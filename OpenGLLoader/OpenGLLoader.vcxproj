@@ -136,6 +136,7 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="LoadShaders.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="maze_game.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="stbImageLoader.cpp" />
   </ItemGroup>
