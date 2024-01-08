@@ -17,4 +17,6 @@ void SetMatrices(Shader& ShaderProgramIn);
 
 bool TestCollisions(Player &player);
 
+void VictoryCollision();
+
 GLuint program;

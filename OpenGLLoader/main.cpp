@@ -15,6 +15,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "maze_game.h"
 
 #include "game_object.h"
 
@@ -27,11 +28,15 @@
 
 #include "player.h"
 
+#include <random>
+
 
 using namespace std;
 using namespace glm;
 
 vector<GameObject> gameObjects;
+
+MazeGameLevel* level1;
 
 //VAO vertex attribute positions in correspondence to vertex attribute type
 enum VAO_IDs { Triangles, Indices, Colours, Textures, NumVAOs = 2 };
@@ -57,6 +62,14 @@ int windowHeight = 720;
 
 Player* player;
 
+
+
+GLfloat bgR = 0.25f;
+GLfloat bgG = 0.0f;
+GLfloat bgB = 1.0f;
+GLfloat bgA = 1.0f;
+
+
 //Transformations
 //Relative position within world space
 vec3 cameraPosition = vec3(0.0f, 0.0f, 3.0f);
@@ -79,6 +92,14 @@ float cameraLastYPos = 600.0f / 2.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+vec3 playerStartPosition = vec3(-7.0f, 0.5f, -7.0f);
+
+const string FILE_NAMES[] = { "level1.txt", "level2.txt", "level3.txt" };
+
+const string FILE_FOLDER = "levelData/";
+
+bool gameRunning = true;
+
 
 int main()
 {
@@ -95,6 +116,9 @@ int main()
         return -1;
     }
 
+    srand(time(NULL));
+    string fileToLoad = FILE_NAMES[rand() % 3];
+
     //Binds OpenGL to window
     glfwMakeContextCurrent(window);
 
@@ -110,40 +134,29 @@ int main()
     Model Rock("media/rock/Rock07-Base.obj");
     Model Tree("media/tree/yamaboushi_tan_6000_a_spr1.obj");
 
+    Model Chest("media/chest/chest.obj");
+
     Model Brick("media/cube/centreCube.obj");
 
     Model Floor("media/cube/plane.obj");
 
     Model SkyBox("media/skybox/skybox.obj");
 
+    Model victoryScreen("media/victory/victoryScreen.obj");
+
     Shaders.use();
 
-    GameObject Brick1(vec3(5.0f, 0.6f, -9.0f), vec3(1.0f, 1.0f, 1.0f), true);
 
-    GameObject Brick2(vec3(3.0f, 0.6f, -9.0f), vec3(1.0f, 1.0f, 1.0f), true);
+    GameObject Ground(vec3(0.0f, 0.8f, 0.0f), vec3(1.0f, 1.0f, 1.0f), false, "floor");
 
-    GameObject Brick3(vec3(7.0f, 0.6f, -9.0f), vec3(1.0f, 1.0f, 1.0f), true);
+    GameObject VictoryScreen(vec3(0.0f, 0.0f, -15.0f), vec3(1.0f, 1.0f, 1.0f), false, "victory");
 
-    GameObject Brick4(vec3(9.0f, 0.6f, -9.0f), vec3(1.0f, 1.0f, 1.0f), true);
+    GameObject SkyBoxObject(vec3(0.0f, 1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), false, "skybox");
 
-    GameObject Brick5(vec3(-9.0f, 0.6f, -9.0f), vec3(1.0f, 1.0f, 1.0f), true);
 
-    GameObject Brick6(vec3(-9.0f, 0.6f, 9.0f), vec3(1.0f, 1.0f, 1.0f), true);
+    level1 = new MazeGameLevel();
 
-    GameObject Brick7(vec3(9.0f, 0.6f, 9.0f), vec3(1.0f, 1.0f, 1.0f), true);
-
-    GameObject Ground(vec3(0.0f, 0.8f, 0.0f), vec3(1.0f, 1.0f, 1.0f), false);
-
-    GameObject SkyBoxObject(vec3(0.0f, 1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), false);
-
-    gameObjects.push_back(Brick1);
-    gameObjects.push_back(Brick2);
-    gameObjects.push_back(Brick3);
-    gameObjects.push_back(Brick4);
-    gameObjects.push_back(Brick5);
-    gameObjects.push_back(Brick6);
-    gameObjects.push_back(Brick7);
-
+    level1->LoadDataFromFile(FILE_FOLDER + fileToLoad);
 
     //Sets the viewport size within the window to match the window size of 1280x720
     glViewport(0, 0, 1280, 720);
@@ -166,7 +179,7 @@ int main()
     //Projection matrix
     projection = perspective(radians(45.0f), (float)windowWidth / (float)windowHeight, 0.05f, 100.0f);
 
-    player = new Player(cameraPosition,2.0f);
+    player = new Player(playerStartPosition,2.0f);
 
     player->radius = 0.7f;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -200,6 +213,7 @@ int main()
     //Render loop
     while (glfwWindowShouldClose(window) == false)
     {
+
         //get Delta Time
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -210,7 +224,7 @@ int main()
         ProcessUserInput(window); //Takes user input
 
         //Rendering
-        glClearColor(0.25f, 0.0f, 1.0f, 1.0f); //Colour to display on cleared window
+        glClearColor(bgR, bgG, bgB, bgA); //Colour to display on cleared window
         glClear(GL_COLOR_BUFFER_BIT); //Clears the colour buffer
         glClear(GL_DEPTH_BUFFER_BIT); //Might need
 
@@ -223,58 +237,77 @@ int main()
         //Viewer orientation
         view = lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp); //Sets the position of the viewer, the movement direction in relation to it & the world up direction
 
-
-
-        //Rock
-        model = mat4(1.0f);
-        model = translate(model, vec3(0.0f, 0.0f, -1.0f));
-        model = scale(model, vec3(0.05f, 0.05f, 0.05f));
-        SetMatrices(Shaders);
-
-
-        Rock.Draw(Shaders);
-
-        //Brick
-        //model = scale(model, vec3(10.0f, 10.0f, 10.0));
-        /*model = mat4(1.0f);
-        model = translate(model, vec3(0.0f, 0.0f, -1.0f));
-        model = scale(model, vec3(0.5f, 0.5f, 0.5f));
-        SetMatrices(Shaders);
-        Brick.Draw(Shaders);*/
-
-        for (GameObject obj : gameObjects) {
-            model = obj.SetModel();
-
+        //draw normal objects
+        if (gameRunning)
+        {
+            //Rock
+            model = mat4(1.0f);
+            model = translate(model, vec3(0.0f, 0.0f, -1.0f));
+            model = scale(model, vec3(0.05f, 0.05f, 0.05f));
             SetMatrices(Shaders);
-            Brick.Draw(Shaders);
+
+
+            Rock.Draw(Shaders);
+
+            //Brick
+            //model = scale(model, vec3(10.0f, 10.0f, 10.0));
+            /*model = mat4(1.0f);
+            model = translate(model, vec3(0.0f, 0.0f, -1.0f));
+            model = scale(model, vec3(0.5f, 0.5f, 0.5f));
+            SetMatrices(Shaders);
+            Brick.Draw(Shaders);*/
+
+            for (GameObject obj : level1->Blocks) {
+                model = obj.SetModel();
+
+                SetMatrices(Shaders);
+                if (obj.type == "block")
+                {
+                    Brick.Draw(Shaders);
+                }
+                else if (obj.type == "chest")
+                {
+                    Chest.Draw(Shaders);
+                }
+
+            }
+
+            //draw floor
+
+            model = Ground.SetModel();
+            SetMatrices(Shaders);
+            Floor.Draw(Shaders);
+
+            model = SkyBoxObject.SetModel();
+            SetMatrices(Shaders);
+            SkyBox.Draw(Shaders);
+
+            //Rock (reorient MVP back to starting values)
+            //model = scale(model, vec3(0.1f, 0.1f, 0.1f));
+
+            //SetMatrices(Shaders);
+
+            //Tree (changes MVP in relation to past values)
+            model = mat4(1.0f);
+            model = translate(model, vec3(-3.0f, 0.0f, 0.0f));
+            model = scale(model, vec3(0.0005f, 0.0005f, 0.0005f));
+            SetMatrices(Shaders);
+            Tree.Draw(Shaders);
+
+            //Rock (reorient MVP back to starting values)
+
+            model = scale(model, vec3(20.0f, 20.0f, 20.0f));
+            SetMatrices(Shaders);
+        }
+        else
+        {
+            model = VictoryScreen.SetModel();
+            SetMatrices(Shaders);
+            victoryScreen.Draw(Shaders);
         }
 
-        //draw floor
 
-        model = Ground.SetModel();
-        SetMatrices(Shaders);
-        Floor.Draw(Shaders);
-
-        model = SkyBoxObject.SetModel();
-        SetMatrices(Shaders);
-        SkyBox.Draw(Shaders);
-
-        //Rock (reorient MVP back to starting values)
-        //model = scale(model, vec3(0.1f, 0.1f, 0.1f));
-
-        //SetMatrices(Shaders);
-
-        //Tree (changes MVP in relation to past values)
-        model = mat4(1.0f);
-        model = translate(model, vec3(-3.0f, 0.0f, 0.0f));
-        model = scale(model, vec3(0.0005f, 0.0005f, 0.0005f));
-        SetMatrices(Shaders);
-        Tree.Draw(Shaders);
-
-        //Rock (reorient MVP back to starting values)
         
-        model = scale(model, vec3(20.0f, 20.0f, 20.0f));
-        SetMatrices(Shaders);
 
 
 
@@ -304,6 +337,10 @@ void ProcessUserInput(GLFWwindow* window)
     }
     Player* playerPlusMove = new Player(player->position, player->radius);
 
+    if (!gameRunning)
+    {
+        return;
+    }
 
     //WASD controls
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -385,6 +422,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         mouseFirstEntry = false;
     }
 
+    if (!gameRunning)
+    {
+        return;
+    }
+
     //Sets values for change in position since last frame to current frame
     float xOffset = (float)xpos - cameraLastXPos;
     float yOffset = cameraLastYPos - (float)ypos;
@@ -464,13 +506,16 @@ bool PlayerCollision(Player& player, GameObject& object)
 
     //if it's inconclusive, get the distance from us to the object squared
     float distanceToCornerSquared = ((playerXDist - object.size.x) * (playerXDist - object.size.x)) + ((playerYDist - object.size.y) * (playerYDist - object.size.y) + ((playerZDist - object.size.z) * (playerZDist - object.size.z)));
-
+    
     //then check against our radius
-    return (distanceToCornerSquared < (player.radius * player.radius));
+    bool collision = distanceToCornerSquared < (player.radius* player.radius);
+
+    //return if there was a collision
+    return collision;
 }
 
 bool TestCollisions(Player &player) {
-    for (GameObject& object : gameObjects) {
+    for (GameObject& object : level1->Blocks) {
         if (object.solid)
         {
             if (PlayerCollision(player, object))
@@ -479,7 +524,29 @@ bool TestCollisions(Player &player) {
                 return true;
             }
         }
+        else
+        {
+            if (PlayerCollision(player, object))
+            {
+                cout << "NON SOLID COLLISION" << endl;
+                VictoryCollision();
+                return false;
+            }
+        }
     }
 
     return false;
+}
+
+void VictoryCollision() {
+    gameRunning = false;
+
+    player->position = vec3(0.0f, 0.0f, 0.0f);
+
+    cameraFront = vec3(0.0f, 0.0f, -1.0f);
+
+    bgR = 0.0f;
+    bgG = 0.0f;
+    bgB = 0.0f;
+    bgA = 0.0f;
 }

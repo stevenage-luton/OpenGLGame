@@ -10,7 +10,7 @@ public:
 	float radius;
 	glm::vec3 position;
 
-	const float PLAYER_MOVESPEED = 1.0f;
+	const float PLAYER_MOVESPEED = 2.0f;
 
 	Player();
 	Player(glm::vec3 position, float radius);

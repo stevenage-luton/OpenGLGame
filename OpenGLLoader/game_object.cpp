@@ -1,8 +1,8 @@
 
 #include "game_object.h"
 
-GameObject::GameObject(glm::vec3 position, glm::vec3 size, bool solid): 
-	position(position), size(size), solid(solid) {};
+GameObject::GameObject(glm::vec3 position, glm::vec3 size, bool solid, string type):
+	position(position), size(size), solid(solid), type(type) {};
 
 glm:: mat4 GameObject::SetModel() {
 
