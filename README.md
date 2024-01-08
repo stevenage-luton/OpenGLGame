@@ -1,75 +1,43 @@
-# Welcome to StackEdit!
+# Maze Game By Huw
 
-Hi! I'm your first Markdown file in **StackEdit**. If you want to learn about StackEdit, you can read me. If you want to play with Markdown, you can edit me. Once you have finished with me, you can create new files by opening the **file explorer** on the left corner of the navigation bar.
+A short, simple Maze Game in C++ and OpenGL.
 
+# How to open the .exe
 
-# Files
+Unzip the folder and then double click the .exe. Ensure that libraries are in C:\Users\Public\OpenGL or it probably won't open
 
-StackEdit stores your files in your browser, which means all your files are automatically saved locally and are accessible **offline!**
+# How does the program work?
 
-## Create files and folders
+"main.cpp" is what runs the program. This contains the Render loop and all the models required for it. It's also responsible for detecting and handling collisions between objects. The "Player" class is fairly simple, containing information nessecary for calculating collisions (position + radius, for sphere collisions) as well as a constant "MOVESPEED" and a Move method, which take directions calculated in "main" from key inputs, and use them to update the position of the player.
 
-The file explorer is accessible using the button in left corner of the navigation bar. You can create a new file by clicking the **New file** button in the file explorer. You can also create folders by clicking the **New folder** button.
+The "MazeGameLevel" class ("maze_game.h" is the filename; more clarity was needed) contains a vector of GameObjects, as well as two methods: A public method that loads a level from a given .txt file, and a private InitializeLevel method called by the loader. The InitializeLevel method is responsible for parsing the input jagged array. A position vector3 starts at the top left corner of the maze, and updates its position after each square of the grid is placed (Empty, Solid, or Victory Chest). If required, a GameObject is created at it's coordinates each time and pushed back to a Vector containing all the GameObjects for the level.
 
-## Switch to another file
+The "GameObject" class, similar to the player class, contains information required for collisions. Essentially, it's position, and size on each axis (it's collider is a box). It also contains a method for setting the Model of the MVP for each instance of the object to be placed.
 
-All your files and folders are presented as a tree in the file explorer. You can switch from one to another by clicking a file in the tree.
+# What makes the program special?
 
-## Rename a file
+It is a fully playable game with 3 levels selected from randomly. The player has to know how to navigate mazes (and avoid common tricks used to keep the player looping around in circles) to be able to complete it. There is also a victory condition if the player reaches the treasure at the end of the maze.
 
-You can rename the current file by clicking the file name in the navigation bar or by clicking the **Rename** button in the file explorer.
+## Where was the idea from?
 
-## Delete a file
+Lab 8- Procedural generation gave me the idea to try a game that featured procedural generation, and I knew that maze generation algorithms existed, so I wanted to combine the two. Unfortunately I didn't know how to program a maze generation algorithm, so I decided to simply use pre-made maps that were loaded from files.
 
-You can delete the current file by clicking the **Remove** button in the file explorer. The file will be moved into the **Trash** folder and automatically deleted after 7 days of inactivity.
+## What I started with
 
-## Export a file
+I started with the material used for Lab 9- Model Loading(https://github.com/AmethystBird/COMP3016-Lab-Tasks/tree/main/Lab9). The libraries and materials used were the ones provided: GLAD, GLM, GLEW, ASSimp, and the LearnOpenGL "shader" and "model" files. I also attempted to incorporate similar object-oriented design patterns to the "LearnOpenGL" "breakout" tutorial (https://learnopengl.com/In-Practice/2D-Game/Breakout), though there were issues with this as will be detailed soon.
 
-You can export the current file by clicking **Export to disk** in the menu. You can choose to export the file as plain Markdown, as HTML using a Handlebars template or as a PDF.
+## How did I make mine unique?
 
+The object-oriented design proved harder than it seemed. I had to write it from the ground up, porting over functionality piecemeal to my new classes and stopping when something broke. I was able to use object instancing to draw many copies of the same object by only storing information about the model in a GameObject class, but not attaching ownership of any actual model, mesh, or shader to any GameObjects. Instead, we draw an instance of that object at the right location according to the GameObject's size and location variables.
 
-# Synchronization
+Additionally, the LearnOpenGL "breakout" tutorial gives an example of using fileloading to get information required to load a 2d screen full of blocks. I used that as a jumping off point for being able to load different mazes at random when the program loads, to give variety to the player. The only similarities are that they split functionality between two methods- one that reads the file, and one that parses it. Unfortunately everything else had to be done by hand, as my GameObject class, Player class and Level Class all had very different intended functionality by virtue of the fact the player needed to be able to navigate a 3d space instead of just shooting 2d sprites at other 2d sprites.
 
-Synchronization is one of the biggest features of StackEdit. It enables you to synchronize any file in your workspace with other files stored in your **Google Drive**, your **Dropbox** and your **GitHub** accounts. This allows you to keep writing on other devices, collaborate with people you share the file with, integrate easily into your workflow... The synchronization mechanism takes place every minute in the background, downloading, merging, and uploading file modifications.
+## Did I start with a given project?
 
-There are two types of synchronization and they can complement each other:
+I started with the material used for Lab 9- Model Loading. https://github.com/AmethystBird/COMP3016-Lab-Tasks/tree/main/Lab9 
 
-- The workspace synchronization will sync all your files, folders and settings automatically. This will allow you to fetch your workspace on any other device.
-	> To start syncing your workspace, just sign in with Google in the menu.
+MouseLook code is mostly the same, as are the vertex and fragment shaders. Playermovement needed to be changed to keep the player fixed to the same Y plane (it would be too easy to solve the maze if the player could just fly around freely as in the lab), as did the process of rendering objects. Other features such as AABB collisions (sphere and box), loading levels, and victory conditions were added by me.
 
-- The file synchronization will keep one file of the workspace synced with one or multiple files in **Google Drive**, **Dropbox** or **GitHub**.
-	> Before starting to sync files, you must link an account in the **Synchronize** sub-menu.
+# Video Link
 
-## Open a file
-
-You can open a file from **Google Drive**, **Dropbox** or **GitHub** by opening the **Synchronize** sub-menu and clicking **Open from**. Once opened in the workspace, any modification in the file will be automatically synced.
-
-## Save a file
-
-You can save any file of the workspace to **Google Drive**, **Dropbox** or **GitHub** by opening the **Synchronize** sub-menu and clicking **Save on**. Even if a file in the workspace is already synced, you can save it to another location. StackEdit can sync one file with multiple locations and accounts.
-
-## Synchronize a file
-
-Once your file is linked to a synchronized location, StackEdit will periodically synchronize it by downloading/uploading any modification. A merge will be performed if necessary and conflicts will be resolved.
-
-If you just have modified your file and you want to force syncing, click the **Synchronize now** button in the navigation bar.
-
-> **Note:** The **Synchronize now** button is disabled if you have no file to synchronize.
-
-## Manage file synchronization
-
-Since one file can be synced with multiple locations, you can list and manage synchronized locations by clicking **File synchronization** in the **Synchronize** sub-menu. This allows you to list and remove synchronized locations that are linked to your file.
-
-
-# Publication
-
-Publishing in StackEdit makes it simple for you to publish online your files. Once you're happy with a file, you can publish it to different hosting platforms like **Blogger**, **Dropbox**, **Gist**, **GitHub**, **Google Drive**, **WordPress** and **Zendesk**. With [Handlebars templates](http://handlebarsjs.com/), you have full control over what you export.
-
-> Before starting to publish, you must link an account in the **Publish** sub-menu.
-
-## Publish a File
-
-You can publish your file by opening the **Publish** sub-menu and by clicking **Publish to**. For some locations, you can choose between the following formats:
-
-- Markdown: publish the Markdown text on a website that can interpret it (**GitHub** for instance),
-- HTML: publish the file converted to HTML via a Handlebars template (on a blog for example).
+https://youtu.be/C6eGYFOuosk
